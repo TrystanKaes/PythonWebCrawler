@@ -62,10 +62,9 @@ def now_crawl():
 
         new_page = WebPage(url=URL_POOL.get())
 
-        LOCK.acquire()
-        OUTPUT.write('{:>120}    {}\n'.format(new_page.url, str(new_page.status)))
-        print('{} is crawling {}'.format(threading.currentThread().getName(), new_page.url))
-        LOCK.release()
+        with LOCK:
+            OUTPUT.write('{:>120}    {}\n'.format(new_page.url, str(new_page.status)))
+            print('{} is crawling {}'.format(threading.currentThread().getName(), new_page.url))
 
         if not new_page.error:
             latest_list = new_page.parse_links()
@@ -73,10 +72,9 @@ def now_crawl():
             if urlparse(new_page.url)[1] == urlparse(URL)[1]:
                 for link in latest_list:
                     if link not in URL_UNIQUE:
-                        LOCK.acquire()
-                        URL_POOL.put(link)
-                        URL_UNIQUE.add(link)
-                        LOCK.release()
+                        with LOCK:
+                            URL_POOL.put(link)
+                            URL_UNIQUE.add(link)
 
         URL_POOL.task_done()
         if URL_POOL.empty(): #if the pool is empty
